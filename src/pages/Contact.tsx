@@ -72,7 +72,10 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-white mb-1">Phone</h3>
-                    <p className="text-gray-400">+357 99 123 456</p>
+                    <div className="text-gray-400">
+                      <p>+357 99 676 373</p>
+                      <p>+357 99 155 460</p>
+                    </div>
                     <p className="text-sm text-gray-500">Available 9 AM - 7 PM</p>
                   </div>
                 </div>
@@ -83,7 +86,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-white mb-1">Email</h3>
-                    <p className="text-gray-400">info@androsan.com</p>
+                    <p className="text-gray-400">androsancars@gmail.com</p>
                     <p className="text-sm text-gray-500">We reply within 24 hours</p>
                   </div>
                 </div>
@@ -108,10 +111,10 @@ const Contact = () => {
                   <div>
                     <h3 className="text-lg font-semibold text-white mb-1">WhatsApp</h3>
                     <a 
-                      href="https://wa.me/35799123456" 
+                      href="https://wa.me/35799676373" 
                       className="text-green-400 hover:text-green-300 transition-colors"
                     >
-                      +357 99 123 456
+                      +357 99 676 373
                     </a>
                     <p className="text-sm text-gray-500">Quick chat support</p>
                   </div>

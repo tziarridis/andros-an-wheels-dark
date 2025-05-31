@@ -90,7 +90,7 @@ const Home = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-            <a href="tel:+35799123456" className="btn-primary flex items-center space-x-3 text-lg px-8 py-4 hover:scale-105 transition-transform">
+            <a href="tel:+35799676373" className="btn-primary flex items-center space-x-3 text-lg px-8 py-4 hover:scale-105 transition-transform">
               <Phone size={24} />
               <span>Call Now</span>
             </a>
@@ -99,7 +99,7 @@ const Home = () => {
               <span>Apply for Finance</span>
             </Link>
             <a 
-              href="https://wa.me/35799123456" 
+              href="https://wa.me/35799676373" 
               className="btn-outline flex items-center space-x-3 text-lg px-8 py-4 hover:scale-105 transition-transform"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -287,7 +287,7 @@ const Home = () => {
             Contact us today and let our experts help you find the car of your dreams with the best financing options.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="tel:+35799123456" className="bg-white text-red-600 hover:bg-gray-100 font-semibold py-4 px-8 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
+            <a href="tel:+35799676373" className="bg-white text-red-600 hover:bg-gray-100 font-semibold py-4 px-8 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
               <Phone size={20} />
               <span>Call Us Now</span>
             </a>

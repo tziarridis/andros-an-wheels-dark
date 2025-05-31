@@ -20,7 +20,7 @@ const Footer = () => {
             </p>
             <div className="flex space-x-4">
               <a
-                href="https://wa.me/35799123456"
+                href="https://wa.me/35799676373"
                 className="bg-green-500 hover:bg-green-600 text-white p-2 rounded-full transition-colors"
                 aria-label="WhatsApp"
               >
@@ -29,7 +29,7 @@ const Footer = () => {
                 </svg>
               </a>
               <a
-                href="tel:+35799123456"
+                href="tel:+35799676373"
                 className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full transition-colors"
                 aria-label="Call"
               >
@@ -71,11 +71,14 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <Phone size={16} className="text-red-600" />
-                <span className="text-gray-400">+357 99 123 456</span>
+                <div>
+                  <div className="text-gray-400">+357 99 676 373</div>
+                  <div className="text-gray-400">+357 99 155 460</div>
+                </div>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail size={16} className="text-red-600" />
-                <span className="text-gray-400">info@androsan.com</span>
+                <span className="text-gray-400">androsancars@gmail.com</span>
               </div>
               <div className="flex items-center space-x-3">
                 <MapPin size={16} className="text-red-600" />

@@ -47,7 +47,7 @@ const Navigation = () => {
               </Link>
             ))}
             <a
-              href="tel:+35799123456"
+              href="tel:+35799676373"
               className="btn-primary flex items-center space-x-2 hover:scale-105 transition-transform duration-300"
             >
               <Phone size={18} />
@@ -85,7 +85,7 @@ const Navigation = () => {
                 </Link>
               ))}
               <a
-                href="tel:+35799123456"
+                href="tel:+35799676373"
                 className="btn-primary flex items-center justify-center space-x-2 mt-4 hover:scale-105 transition-transform duration-300"
               >
                 <Phone size={18} />
