@@ -9,7 +9,169 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      car_orders: {
+        Row: {
+          budget_range: string | null
+          car_make: string
+          car_model: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string | null
+          special_requirements: string | null
+        }
+        Insert: {
+          budget_range?: string | null
+          car_make: string
+          car_model: string
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          phone?: string | null
+          special_requirements?: string | null
+        }
+        Update: {
+          budget_range?: string | null
+          car_make?: string
+          car_model?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          special_requirements?: string | null
+        }
+        Relationships: []
+      }
+      cars: {
+        Row: {
+          created_at: string
+          description: string | null
+          fuel_type: string
+          id: string
+          image_url: string | null
+          make: string
+          mileage: string | null
+          model: string
+          price: number
+          transmission: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          fuel_type: string
+          id?: string
+          image_url?: string | null
+          make: string
+          mileage?: string | null
+          model: string
+          price: number
+          transmission: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          fuel_type?: string
+          id?: string
+          image_url?: string | null
+          make?: string
+          mileage?: string | null
+          model?: string
+          price?: number
+          transmission?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      contact_inquiries: {
+        Row: {
+          car_id: string | null
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+          phone: string | null
+        }
+        Insert: {
+          car_id?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+          phone?: string | null
+        }
+        Update: {
+          car_id?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_inquiries_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_applications: {
+        Row: {
+          annual_income: number | null
+          car_id: string | null
+          created_at: string
+          email: string
+          employment_status: string | null
+          id: string
+          loan_amount: number | null
+          name: string
+          phone: string | null
+        }
+        Insert: {
+          annual_income?: number | null
+          car_id?: string | null
+          created_at?: string
+          email: string
+          employment_status?: string | null
+          id?: string
+          loan_amount?: number | null
+          name: string
+          phone?: string | null
+        }
+        Update: {
+          annual_income?: number | null
+          car_id?: string | null
+          created_at?: string
+          email?: string
+          employment_status?: string | null
+          id?: string
+          loan_amount?: number | null
+          name?: string
+          phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_applications_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

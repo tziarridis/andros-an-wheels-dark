@@ -1,9 +1,26 @@
 
-import { useState } from 'react';
-import { Search, Filter } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+interface Car {
+  id: string;
+  make: string;
+  model: string;
+  year: number;
+  price: number;
+  mileage: string;
+  fuel_type: string;
+  transmission: string;
+  description: string | null;
+  image_url: string | null;
+}
 
 const Inventory = () => {
+  const [cars, setCars] = useState<Car[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     brand: '',
@@ -12,75 +29,32 @@ const Inventory = () => {
     fuel: '',
     transmission: ''
   });
+  const { toast } = useToast();
 
-  const cars = [
-    {
-      id: 1,
-      make: 'Mazda',
-      model: 'Demio',
-      year: 2020,
-      price: 12500,
-      image: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=500&h=300&fit=crop',
-      fuel: 'Petrol',
-      transmission: 'Manual',
-      mileage: '45,000 km'
-    },
-    {
-      id: 2,
-      make: 'Range Rover',
-      model: 'Evoque',
-      year: 2019,
-      price: 35000,
-      image: 'https://images.unsplash.com/photo-1494905998402-395d579af36f?w=500&h=300&fit=crop',
-      fuel: 'Petrol',
-      transmission: 'Automatic',
-      mileage: '60,000 km'
-    },
-    {
-      id: 3,
-      make: 'BMW',
-      model: '320i',
-      year: 2021,
-      price: 28000,
-      image: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=500&h=300&fit=crop',
-      fuel: 'Petrol',
-      transmission: 'Automatic',
-      mileage: '35,000 km'
-    },
-    {
-      id: 4,
-      make: 'Toyota',
-      model: 'Corolla',
-      year: 2022,
-      price: 18500,
-      image: 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=500&h=300&fit=crop',
-      fuel: 'Hybrid',
-      transmission: 'Automatic',
-      mileage: '25,000 km'
-    },
-    {
-      id: 5,
-      make: 'Mercedes',
-      model: 'C-Class',
-      year: 2020,
-      price: 32000,
-      image: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=500&h=300&fit=crop',
-      fuel: 'Petrol',
-      transmission: 'Automatic',
-      mileage: '50,000 km'
-    },
-    {
-      id: 6,
-      make: 'Volkswagen',
-      model: 'Golf',
-      year: 2021,
-      price: 22000,
-      image: 'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?w=500&h=300&fit=crop',
-      fuel: 'Petrol',
-      transmission: 'Manual',
-      mileage: '30,000 km'
+  useEffect(() => {
+    fetchCars();
+  }, []);
+
+  const fetchCars = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('cars')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setCars(data || []);
+    } catch (error) {
+      console.error('Error fetching cars:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load cars",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const filteredCars = cars.filter(car => {
     const matchesSearch = car.make.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -99,11 +73,22 @@ const Inventory = () => {
     })();
     
     const matchesYear = !filters.year || car.year.toString() === filters.year;
-    const matchesFuel = !filters.fuel || car.fuel.toLowerCase() === filters.fuel.toLowerCase();
+    const matchesFuel = !filters.fuel || car.fuel_type.toLowerCase() === filters.fuel.toLowerCase();
     const matchesTransmission = !filters.transmission || car.transmission.toLowerCase() === filters.transmission.toLowerCase();
     
     return matchesSearch && matchesBrand && matchesPrice && matchesYear && matchesFuel && matchesTransmission;
   });
+
+  // Get unique brands for filter dropdown
+  const uniqueBrands = [...new Set(cars.map(car => car.make))].sort();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white text-xl">Loading inventory...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black py-20">
@@ -135,12 +120,9 @@ const Inventory = () => {
               className="px-4 py-2 bg-black border border-gray-700 rounded-lg text-white focus:border-red-600 focus:outline-none"
             >
               <option value="">All Brands</option>
-              <option value="BMW">BMW</option>
-              <option value="Mazda">Mazda</option>
-              <option value="Range Rover">Range Rover</option>
-              <option value="Toyota">Toyota</option>
-              <option value="Mercedes">Mercedes</option>
-              <option value="Volkswagen">Volkswagen</option>
+              {uniqueBrands.map(brand => (
+                <option key={brand} value={brand}>{brand}</option>
+              ))}
             </select>
 
             {/* Price Range Filter */}
@@ -194,7 +176,7 @@ const Inventory = () => {
           {filteredCars.map((car) => (
             <div key={car.id} className="bg-gray-900 rounded-lg overflow-hidden hover:shadow-2xl hover:shadow-red-600/20 transition-all duration-300">
               <img 
-                src={car.image} 
+                src={car.image_url || 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=500&h=300&fit=crop'} 
                 alt={`${car.make} ${car.model}`}
                 className="w-full h-48 object-cover"
               />
@@ -204,10 +186,13 @@ const Inventory = () => {
                 </h3>
                 <div className="grid grid-cols-2 gap-2 text-sm text-gray-400 mb-4">
                   <span>Year: {car.year}</span>
-                  <span>Fuel: {car.fuel}</span>
+                  <span>Fuel: {car.fuel_type}</span>
                   <span>Transmission: {car.transmission}</span>
                   <span>Mileage: {car.mileage}</span>
                 </div>
+                {car.description && (
+                  <p className="text-gray-300 text-sm mb-4">{car.description}</p>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="text-2xl font-bold text-red-600">€{car.price.toLocaleString()}</span>
                   <Link to="/contact" className="btn-primary">
