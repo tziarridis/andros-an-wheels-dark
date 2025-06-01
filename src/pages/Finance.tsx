@@ -2,9 +2,11 @@
 import { useState } from 'react';
 import { CheckCircle, DollarSign, Clock, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const Finance = () => {
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -16,7 +18,7 @@ const Finance = () => {
     message: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic validation
@@ -29,24 +31,70 @@ const Finance = () => {
       return;
     }
 
-    console.log('Finance application submitted:', formData);
-    
-    toast({
-      title: "Application Submitted!",
-      description: "We'll review your application and contact you within 24 hours.",
-    });
+    setIsSubmitting(true);
 
-    // Reset form
-    setFormData({
-      fullName: '',
-      email: '',
-      phone: '',
-      carInterested: '',
-      monthlyBudget: '',
-      employmentStatus: '',
-      monthlyIncome: '',
-      message: ''
-    });
+    try {
+      // Convert monthly budget range to loan amount (estimate)
+      const budgetMapping: { [key: string]: number } = {
+        '200-300': 15000,
+        '300-500': 25000,
+        '500-700': 35000,
+        '700-1000': 50000,
+        '1000+': 75000
+      };
+
+      // Convert monthly income range to annual income
+      const incomeMapping: { [key: string]: number } = {
+        '1000-2000': 18000,
+        '2000-3000': 30000,
+        '3000-5000': 48000,
+        '5000+': 72000
+      };
+
+      const { error } = await supabase
+        .from('finance_applications')
+        .insert([
+          {
+            name: formData.fullName,
+            email: formData.email,
+            phone: formData.phone,
+            loan_amount: budgetMapping[formData.monthlyBudget] || null,
+            annual_income: incomeMapping[formData.monthlyIncome] || null,
+            employment_status: formData.employmentStatus || null
+          }
+        ]);
+
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+
+      toast({
+        title: "Application Submitted!",
+        description: "We'll review your application and contact you within 24 hours.",
+      });
+
+      // Reset form
+      setFormData({
+        fullName: '',
+        email: '',
+        phone: '',
+        carInterested: '',
+        monthlyBudget: '',
+        employmentStatus: '',
+        monthlyIncome: '',
+        message: ''
+      });
+    } catch (error) {
+      console.error('Error submitting finance application:', error);
+      toast({
+        title: "Error",
+        description: "There was a problem submitting your application. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -180,7 +228,8 @@ const Finance = () => {
                     value={formData.fullName}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none"
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none disabled:opacity-50"
                     placeholder="Enter your full name"
                   />
                 </div>
@@ -195,7 +244,8 @@ const Finance = () => {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none"
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none disabled:opacity-50"
                     placeholder="your@email.com"
                   />
                 </div>
@@ -211,7 +261,8 @@ const Finance = () => {
                   value={formData.phone}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none"
+                  disabled={isSubmitting}
+                  className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none disabled:opacity-50"
                   placeholder="+357 99 123 456"
                 />
               </div>
@@ -225,7 +276,8 @@ const Finance = () => {
                   name="carInterested"
                   value={formData.carInterested}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none"
+                  disabled={isSubmitting}
+                  className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none disabled:opacity-50"
                   placeholder="e.g., BMW 320i, Range Rover Evoque"
                 />
               </div>
@@ -239,7 +291,8 @@ const Finance = () => {
                     name="monthlyBudget"
                     value={formData.monthlyBudget}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white focus:border-red-600 focus:outline-none"
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white focus:border-red-600 focus:outline-none disabled:opacity-50"
                   >
                     <option value="">Select budget</option>
                     <option value="200-300">€200 - €300</option>
@@ -258,7 +311,8 @@ const Finance = () => {
                     name="employmentStatus"
                     value={formData.employmentStatus}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white focus:border-red-600 focus:outline-none"
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white focus:border-red-600 focus:outline-none disabled:opacity-50"
                   >
                     <option value="">Select status</option>
                     <option value="employed">Full-time Employed</option>
@@ -278,7 +332,8 @@ const Finance = () => {
                   name="monthlyIncome"
                   value={formData.monthlyIncome}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white focus:border-red-600 focus:outline-none"
+                  disabled={isSubmitting}
+                  className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white focus:border-red-600 focus:outline-none disabled:opacity-50"
                 >
                   <option value="">Select income range</option>
                   <option value="1000-2000">€1,000 - €2,000</option>
@@ -296,14 +351,19 @@ const Finance = () => {
                   name="message"
                   value={formData.message}
                   onChange={handleChange}
+                  disabled={isSubmitting}
                   rows={4}
-                  className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none resize-none"
+                  className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none resize-none disabled:opacity-50"
                   placeholder="Tell us more about your requirements..."
                 />
               </div>
 
-              <button type="submit" className="w-full btn-primary">
-                Submit Application
+              <button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit Application'}
               </button>
             </form>
 

@@ -2,9 +2,11 @@
 import { useState } from 'react';
 import { Car, Globe, CheckCircle, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const Order = () => {
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -21,7 +23,7 @@ const Order = () => {
     message: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic validation
@@ -34,29 +36,69 @@ const Order = () => {
       return;
     }
 
-    console.log('Car order submitted:', formData);
-    
-    toast({
-      title: "Order Request Submitted!",
-      description: "We'll find your dream car and contact you within 24 hours with options and pricing.",
-    });
+    setIsSubmitting(true);
 
-    // Reset form
-    setFormData({
-      fullName: '',
-      email: '',
-      phone: '',
-      carMake: '',
-      carModel: '',
-      carYear: '',
-      budget: '',
-      preferredColor: '',
-      preferredTransmission: '',
-      preferredFuel: '',
-      contactMethod: '',
-      timeline: '',
-      message: ''
-    });
+    try {
+      // Build special requirements string
+      const requirements = [];
+      if (formData.carYear) requirements.push(`Year: ${formData.carYear}`);
+      if (formData.preferredColor) requirements.push(`Color: ${formData.preferredColor}`);
+      if (formData.preferredTransmission) requirements.push(`Transmission: ${formData.preferredTransmission}`);
+      if (formData.preferredFuel) requirements.push(`Fuel: ${formData.preferredFuel}`);
+      if (formData.contactMethod) requirements.push(`Preferred contact: ${formData.contactMethod}`);
+      if (formData.timeline) requirements.push(`Timeline: ${formData.timeline}`);
+      if (formData.message) requirements.push(`Additional notes: ${formData.message}`);
+
+      const { error } = await supabase
+        .from('car_orders')
+        .insert([
+          {
+            name: formData.fullName,
+            email: formData.email,
+            phone: formData.phone,
+            car_make: formData.carMake,
+            car_model: formData.carModel,
+            budget_range: formData.budget || null,
+            special_requirements: requirements.length > 0 ? requirements.join('\n') : null
+          }
+        ]);
+
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+
+      toast({
+        title: "Order Request Submitted!",
+        description: "We'll find your dream car and contact you within 24 hours with options and pricing.",
+      });
+
+      // Reset form
+      setFormData({
+        fullName: '',
+        email: '',
+        phone: '',
+        carMake: '',
+        carModel: '',
+        carYear: '',
+        budget: '',
+        preferredColor: '',
+        preferredTransmission: '',
+        preferredFuel: '',
+        contactMethod: '',
+        timeline: '',
+        message: ''
+      });
+    } catch (error) {
+      console.error('Error submitting car order:', error);
+      toast({
+        title: "Error",
+        description: "There was a problem submitting your order. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -191,7 +233,8 @@ const Order = () => {
                     value={formData.fullName}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none"
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none disabled:opacity-50"
                     placeholder="Enter your full name"
                   />
                 </div>
@@ -206,7 +249,8 @@ const Order = () => {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none"
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none disabled:opacity-50"
                     placeholder="your@email.com"
                   />
                 </div>
@@ -222,7 +266,8 @@ const Order = () => {
                   value={formData.phone}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none"
+                  disabled={isSubmitting}
+                  className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none disabled:opacity-50"
                   placeholder="+357 99 123 456"
                 />
               </div>
@@ -238,7 +283,8 @@ const Order = () => {
                     value={formData.carMake}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none"
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none disabled:opacity-50"
                     placeholder="e.g., BMW"
                   />
                 </div>
@@ -253,7 +299,8 @@ const Order = () => {
                     value={formData.carModel}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none"
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none disabled:opacity-50"
                     placeholder="e.g., M3"
                   />
                 </div>
@@ -266,7 +313,8 @@ const Order = () => {
                     name="carYear"
                     value={formData.carYear}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white focus:border-red-600 focus:outline-none"
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white focus:border-red-600 focus:outline-none disabled:opacity-50"
                   >
                     <option value="">Any</option>
                     {Array.from({ length: 10 }, (_, i) => 2024 - i).map(year => (
@@ -284,7 +332,8 @@ const Order = () => {
                   name="budget"
                   value={formData.budget}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white focus:border-red-600 focus:outline-none"
+                  disabled={isSubmitting}
+                  className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white focus:border-red-600 focus:outline-none disabled:opacity-50"
                 >
                   <option value="">Select budget</option>
                   <option value="15000-25000">€15,000 - €25,000</option>
@@ -305,7 +354,8 @@ const Order = () => {
                     name="preferredColor"
                     value={formData.preferredColor}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none"
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none disabled:opacity-50"
                     placeholder="e.g., Black, White"
                   />
                 </div>
@@ -318,7 +368,8 @@ const Order = () => {
                     name="preferredTransmission"
                     value={formData.preferredTransmission}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white focus:border-red-600 focus:outline-none"
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white focus:border-red-600 focus:outline-none disabled:opacity-50"
                   >
                     <option value="">No preference</option>
                     <option value="manual">Manual</option>
@@ -334,7 +385,8 @@ const Order = () => {
                     name="preferredFuel"
                     value={formData.preferredFuel}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white focus:border-red-600 focus:outline-none"
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white focus:border-red-600 focus:outline-none disabled:opacity-50"
                   >
                     <option value="">No preference</option>
                     <option value="petrol">Petrol</option>
@@ -354,7 +406,8 @@ const Order = () => {
                     name="contactMethod"
                     value={formData.contactMethod}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white focus:border-red-600 focus:outline-none"
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white focus:border-red-600 focus:outline-none disabled:opacity-50"
                   >
                     <option value="">Select method</option>
                     <option value="phone">Phone Call</option>
@@ -371,7 +424,8 @@ const Order = () => {
                     name="timeline"
                     value={formData.timeline}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white focus:border-red-600 focus:outline-none"
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white focus:border-red-600 focus:outline-none disabled:opacity-50"
                   >
                     <option value="">When do you need it?</option>
                     <option value="asap">ASAP</option>
@@ -390,14 +444,19 @@ const Order = () => {
                   name="message"
                   value={formData.message}
                   onChange={handleChange}
+                  disabled={isSubmitting}
                   rows={4}
-                  className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none resize-none"
+                  className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-red-600 focus:outline-none resize-none disabled:opacity-50"
                   placeholder="Any specific requirements, features, or additional information..."
                 />
               </div>
 
-              <button type="submit" className="w-full btn-primary">
-                Submit Order Request
+              <button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit Order Request'}
               </button>
             </form>
 
