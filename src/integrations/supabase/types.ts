@@ -9,6 +9,50 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      car_images: {
+        Row: {
+          alt_text: string | null
+          car_id: string
+          created_at: string
+          display_order: number | null
+          id: string
+          image_url: string
+          is_primary: boolean | null
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          alt_text?: string | null
+          car_id: string
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          image_url: string
+          is_primary?: boolean | null
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          alt_text?: string | null
+          car_id?: string
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          image_url?: string
+          is_primary?: boolean | null
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "car_images_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       car_orders: {
         Row: {
           budget_range: string | null
@@ -44,6 +88,98 @@ export type Database = {
           special_requirements?: string | null
         }
         Relationships: []
+      }
+      car_specifications: {
+        Row: {
+          acceleration_0_100: number | null
+          boot_capacity: number | null
+          car_id: string
+          co2_emissions: number | null
+          created_at: string
+          drivetrain: string | null
+          engine_size: string | null
+          exterior_color: string | null
+          fuel_consumption_city: number | null
+          fuel_consumption_combined: number | null
+          fuel_consumption_highway: number | null
+          height: number | null
+          horsepower: number | null
+          id: string
+          interior_color: string | null
+          length: number | null
+          number_of_doors: number | null
+          number_of_seats: number | null
+          top_speed: number | null
+          torque: number | null
+          updated_at: string
+          warranty_years: number | null
+          weight: number | null
+          wheelbase: number | null
+          width: number | null
+        }
+        Insert: {
+          acceleration_0_100?: number | null
+          boot_capacity?: number | null
+          car_id: string
+          co2_emissions?: number | null
+          created_at?: string
+          drivetrain?: string | null
+          engine_size?: string | null
+          exterior_color?: string | null
+          fuel_consumption_city?: number | null
+          fuel_consumption_combined?: number | null
+          fuel_consumption_highway?: number | null
+          height?: number | null
+          horsepower?: number | null
+          id?: string
+          interior_color?: string | null
+          length?: number | null
+          number_of_doors?: number | null
+          number_of_seats?: number | null
+          top_speed?: number | null
+          torque?: number | null
+          updated_at?: string
+          warranty_years?: number | null
+          weight?: number | null
+          wheelbase?: number | null
+          width?: number | null
+        }
+        Update: {
+          acceleration_0_100?: number | null
+          boot_capacity?: number | null
+          car_id?: string
+          co2_emissions?: number | null
+          created_at?: string
+          drivetrain?: string | null
+          engine_size?: string | null
+          exterior_color?: string | null
+          fuel_consumption_city?: number | null
+          fuel_consumption_combined?: number | null
+          fuel_consumption_highway?: number | null
+          height?: number | null
+          horsepower?: number | null
+          id?: string
+          interior_color?: string | null
+          length?: number | null
+          number_of_doors?: number | null
+          number_of_seats?: number | null
+          top_speed?: number | null
+          torque?: number | null
+          updated_at?: string
+          warranty_years?: number | null
+          weight?: number | null
+          wheelbase?: number | null
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "car_specifications_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cars: {
         Row: {

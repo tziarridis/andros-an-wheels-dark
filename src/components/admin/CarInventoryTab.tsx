@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Trash2, Plus } from 'lucide-react';
+import { Pencil, Trash2, Plus, Images, Settings } from 'lucide-react';
 import SearchAndFilter from './SearchAndFilter';
+import ImageUpload from './ImageUpload';
+import CarSpecifications from './CarSpecifications';
 import { exportToCSV } from '@/utils/exportUtils';
 
 interface Car {
@@ -23,11 +25,24 @@ interface Car {
   image_url: string | null;
 }
 
+interface CarImage {
+  id: string;
+  car_id: string;
+  image_url: string;
+  storage_path: string;
+  is_primary: boolean;
+  alt_text: string | null;
+  display_order: number;
+}
+
 const CarInventoryTab = () => {
   const [cars, setCars] = useState<Car[]>([]);
+  const [carImages, setCarImages] = useState<Record<string, CarImage[]>>({});
   const [loading, setLoading] = useState(true);
   const [editingCar, setEditingCar] = useState<Car | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [showImageManager, setShowImageManager] = useState<string | null>(null);
+  const [showSpecifications, setShowSpecifications] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
@@ -77,6 +92,29 @@ const CarInventoryTab = () => {
 
       if (error) throw error;
       setCars(data || []);
+      
+      // Fetch images for all cars
+      if (data && data.length > 0) {
+        const carIds = data.map(car => car.id);
+        const { data: imagesData, error: imagesError } = await supabase
+          .from('car_images')
+          .select('*')
+          .in('car_id', carIds)
+          .order('display_order');
+
+        if (imagesError) throw imagesError;
+        
+        // Group images by car_id
+        const imagesByCarId = (imagesData || []).reduce((acc, image) => {
+          if (!acc[image.car_id]) {
+            acc[image.car_id] = [];
+          }
+          acc[image.car_id].push(image);
+          return acc;
+        }, {} as Record<string, CarImage[]>);
+        
+        setCarImages(imagesByCarId);
+      }
     } catch (error) {
       console.error('Error fetching cars:', error);
       toast({
@@ -86,6 +124,25 @@ const CarInventoryTab = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCarImages = async (carId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('car_images')
+        .select('*')
+        .eq('car_id', carId)
+        .order('display_order');
+
+      if (error) throw error;
+      
+      setCarImages(prev => ({
+        ...prev,
+        [carId]: data || []
+      }));
+    } catch (error) {
+      console.error('Error fetching car images:', error);
     }
   };
 
@@ -220,6 +277,12 @@ const CarInventoryTab = () => {
     });
   };
 
+  const getPrimaryImage = (carId: string): string | null => {
+    const images = carImages[carId] || [];
+    const primaryImage = images.find(img => img.is_primary);
+    return primaryImage?.image_url || images[0]?.image_url || null;
+  };
+
   if (loading) {
     return <div className="text-white text-center">Loading car inventory...</div>;
   }
@@ -244,6 +307,46 @@ const CarInventoryTab = () => {
         onRefresh={fetchCars}
         placeholder="Search by make, model, fuel type..."
       />
+
+      {/* Image Manager Modal */}
+      {showImageManager && (
+        <Card className="bg-gray-900 border-gray-700">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-white">Manage Images</CardTitle>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowImageManager(null)}
+              >
+                Close
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ImageUpload 
+              carId={showImageManager}
+              images={carImages[showImageManager] || []}
+              onImagesUpdate={() => fetchCarImages(showImageManager)}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Specifications Manager Modal */}
+      {showSpecifications && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xl font-bold text-white">Car Specifications</h3>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowSpecifications(null)}
+            >
+              Close
+            </Button>
+          </div>
+          <CarSpecifications carId={showSpecifications} />
+        </div>
+      )}
 
       {showForm && (
         <Card className="bg-gray-900 border-gray-700">
@@ -394,44 +497,82 @@ const CarInventoryTab = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCars.map((car) => (
-                  <TableRow key={car.id}>
-                    <TableCell>
-                      {car.image_url && (
-                        <img 
-                          src={car.image_url} 
-                          alt={`${car.make} ${car.model}`}
-                          className="w-16 h-12 object-cover rounded"
-                        />
-                      )}
-                    </TableCell>
-                    <TableCell className="text-white">{car.make}</TableCell>
-                    <TableCell className="text-white">{car.model}</TableCell>
-                    <TableCell className="text-white">{car.year}</TableCell>
-                    <TableCell className="text-white">€{car.price.toLocaleString()}</TableCell>
-                    <TableCell className="text-white">{car.mileage}</TableCell>
-                    <TableCell className="text-white">{car.fuel_type}</TableCell>
-                    <TableCell className="text-white">{car.transmission}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEdit(car)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDelete(car.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {filteredCars.map((car) => {
+                  const primaryImage = getPrimaryImage(car.id);
+                  const imageCount = carImages[car.id]?.length || 0;
+                  
+                  return (
+                    <TableRow key={car.id}>
+                      <TableCell>
+                        <div className="relative">
+                          {primaryImage ? (
+                            <img 
+                              src={primaryImage} 
+                              alt={`${car.make} ${car.model}`}
+                              className="w-16 h-12 object-cover rounded"
+                            />
+                          ) : car.image_url ? (
+                            <img 
+                              src={car.image_url} 
+                              alt={`${car.make} ${car.model}`}
+                              className="w-16 h-12 object-cover rounded"
+                            />
+                          ) : (
+                            <div className="w-16 h-12 bg-gray-600 rounded flex items-center justify-center">
+                              <span className="text-xs text-gray-400">No image</span>
+                            </div>
+                          )}
+                          {imageCount > 0 && (
+                            <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                              {imageCount}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-white">{car.make}</TableCell>
+                      <TableCell className="text-white">{car.model}</TableCell>
+                      <TableCell className="text-white">{car.year}</TableCell>
+                      <TableCell className="text-white">€{car.price.toLocaleString()}</TableCell>
+                      <TableCell className="text-white">{car.mileage}</TableCell>
+                      <TableCell className="text-white">{car.fuel_type}</TableCell>
+                      <TableCell className="text-white">{car.transmission}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEdit(car)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setShowImageManager(car.id)}
+                            className="border-blue-600 text-blue-400 hover:bg-blue-800"
+                          >
+                            <Images className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setShowSpecifications(car.id)}
+                            className="border-green-600 text-green-400 hover:bg-green-800"
+                          >
+                            <Settings className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDelete(car.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
