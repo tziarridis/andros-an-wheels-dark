@@ -1,11 +1,13 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2, Mail, Phone } from 'lucide-react';
+import SearchAndFilter from './SearchAndFilter';
+import { exportToCSV, formatDateForExport } from '@/utils/exportUtils';
 
 interface ContactInquiry {
   id: string;
@@ -20,10 +22,32 @@ interface ContactInquiry {
 const ContactInquiriesTab = () => {
   const [inquiries, setInquiries] = useState<ContactInquiry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
     fetchInquiries();
+    
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('contact-inquiries-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'contact_inquiries'
+        },
+        () => {
+          console.log('Contact inquiries updated, refreshing...');
+          fetchInquiries();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchInquiries = async () => {
@@ -45,6 +69,33 @@ const ContactInquiriesTab = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const filteredInquiries = useMemo(() => {
+    if (!searchTerm) return inquiries;
+    
+    return inquiries.filter(inquiry =>
+      inquiry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      inquiry.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      inquiry.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (inquiry.phone && inquiry.phone.includes(searchTerm))
+    );
+  }, [inquiries, searchTerm]);
+
+  const handleExport = () => {
+    const exportData = filteredInquiries.map(inquiry => ({
+      Date: formatDateForExport(inquiry.created_at),
+      Name: inquiry.name,
+      Email: inquiry.email,
+      Phone: inquiry.phone || '',
+      Message: inquiry.message
+    }));
+    
+    exportToCSV(exportData, 'contact-inquiries');
+    toast({
+      title: "Success",
+      description: "Contact inquiries exported successfully"
+    });
   };
 
   const handleDelete = async (id: string) => {
@@ -81,9 +132,17 @@ const ContactInquiriesTab = () => {
   return (
     <Card className="bg-gray-900 border-gray-700">
       <CardHeader>
-        <CardTitle className="text-white">Contact Inquiries ({inquiries.length})</CardTitle>
+        <CardTitle className="text-white">Contact Inquiries ({filteredInquiries.length})</CardTitle>
       </CardHeader>
       <CardContent>
+        <SearchAndFilter
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          onExport={handleExport}
+          onRefresh={fetchInquiries}
+          placeholder="Search by name, email, or message..."
+        />
+        
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -97,7 +156,7 @@ const ContactInquiriesTab = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {inquiries.map((inquiry) => (
+              {filteredInquiries.map((inquiry) => (
                 <TableRow key={inquiry.id}>
                   <TableCell className="text-white">
                     {new Date(inquiry.created_at).toLocaleDateString()}
@@ -140,6 +199,12 @@ const ContactInquiriesTab = () => {
             </TableBody>
           </Table>
         </div>
+        
+        {filteredInquiries.length === 0 && (
+          <div className="text-center text-gray-400 py-8">
+            {searchTerm ? 'No inquiries match your search.' : 'No contact inquiries found.'}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

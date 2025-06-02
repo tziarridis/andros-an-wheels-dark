@@ -1,11 +1,13 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2, Mail, Phone } from 'lucide-react';
+import SearchAndFilter from './SearchAndFilter';
+import { exportToCSV, formatDateForExport } from '@/utils/exportUtils';
 
 interface FinanceApplication {
   id: string;
@@ -22,10 +24,32 @@ interface FinanceApplication {
 const FinanceApplicationsTab = () => {
   const [applications, setApplications] = useState<FinanceApplication[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
     fetchApplications();
+    
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('finance-applications-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'finance_applications'
+        },
+        () => {
+          console.log('Finance applications updated, refreshing...');
+          fetchApplications();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchApplications = async () => {
@@ -47,6 +71,35 @@ const FinanceApplicationsTab = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const filteredApplications = useMemo(() => {
+    if (!searchTerm) return applications;
+    
+    return applications.filter(application =>
+      application.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      application.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (application.employment_status && application.employment_status.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (application.phone && application.phone.includes(searchTerm))
+    );
+  }, [applications, searchTerm]);
+
+  const handleExport = () => {
+    const exportData = filteredApplications.map(application => ({
+      Date: formatDateForExport(application.created_at),
+      Name: application.name,
+      Email: application.email,
+      Phone: application.phone || '',
+      'Loan Amount': application.loan_amount ? `€${application.loan_amount}` : '',
+      'Annual Income': application.annual_income ? `€${application.annual_income}` : '',
+      'Employment Status': application.employment_status || ''
+    }));
+    
+    exportToCSV(exportData, 'finance-applications');
+    toast({
+      title: "Success",
+      description: "Finance applications exported successfully"
+    });
   };
 
   const handleDelete = async (id: string) => {
@@ -83,9 +136,17 @@ const FinanceApplicationsTab = () => {
   return (
     <Card className="bg-gray-900 border-gray-700">
       <CardHeader>
-        <CardTitle className="text-white">Finance Applications ({applications.length})</CardTitle>
+        <CardTitle className="text-white">Finance Applications ({filteredApplications.length})</CardTitle>
       </CardHeader>
       <CardContent>
+        <SearchAndFilter
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          onExport={handleExport}
+          onRefresh={fetchApplications}
+          placeholder="Search by name, email, or employment status..."
+        />
+        
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -101,7 +162,7 @@ const FinanceApplicationsTab = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {applications.map((application) => (
+              {filteredApplications.map((application) => (
                 <TableRow key={application.id}>
                   <TableCell className="text-white">
                     {new Date(application.created_at).toLocaleDateString()}
@@ -150,6 +211,12 @@ const FinanceApplicationsTab = () => {
             </TableBody>
           </Table>
         </div>
+        
+        {filteredApplications.length === 0 && (
+          <div className="text-center text-gray-400 py-8">
+            {searchTerm ? 'No applications match your search.' : 'No finance applications found.'}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

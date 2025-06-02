@@ -1,11 +1,13 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2, Mail, Phone } from 'lucide-react';
+import SearchAndFilter from './SearchAndFilter';
+import { exportToCSV, formatDateForExport } from '@/utils/exportUtils';
 
 interface CarOrder {
   id: string;
@@ -22,10 +24,32 @@ interface CarOrder {
 const CarOrdersTab = () => {
   const [orders, setOrders] = useState<CarOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
     fetchOrders();
+    
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('car-orders-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'car_orders'
+        },
+        () => {
+          console.log('Car orders updated, refreshing...');
+          fetchOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchOrders = async () => {
@@ -47,6 +71,38 @@ const CarOrdersTab = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const filteredOrders = useMemo(() => {
+    if (!searchTerm) return orders;
+    
+    return orders.filter(order =>
+      order.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.car_make.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.car_model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (order.budget_range && order.budget_range.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (order.phone && order.phone.includes(searchTerm))
+    );
+  }, [orders, searchTerm]);
+
+  const handleExport = () => {
+    const exportData = filteredOrders.map(order => ({
+      Date: formatDateForExport(order.created_at),
+      Name: order.name,
+      Email: order.email,
+      Phone: order.phone || '',
+      'Car Make': order.car_make,
+      'Car Model': order.car_model,
+      'Budget Range': order.budget_range || '',
+      'Special Requirements': order.special_requirements || ''
+    }));
+    
+    exportToCSV(exportData, 'car-orders');
+    toast({
+      title: "Success",
+      description: "Car orders exported successfully"
+    });
   };
 
   const handleDelete = async (id: string) => {
@@ -83,9 +139,17 @@ const CarOrdersTab = () => {
   return (
     <Card className="bg-gray-900 border-gray-700">
       <CardHeader>
-        <CardTitle className="text-white">Car Orders ({orders.length})</CardTitle>
+        <CardTitle className="text-white">Car Orders ({filteredOrders.length})</CardTitle>
       </CardHeader>
       <CardContent>
+        <SearchAndFilter
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          onExport={handleExport}
+          onRefresh={fetchOrders}
+          placeholder="Search by name, email, car make/model..."
+        />
+        
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -101,7 +165,7 @@ const CarOrdersTab = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {orders.map((order) => (
+              {filteredOrders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell className="text-white">
                     {new Date(order.created_at).toLocaleDateString()}
@@ -150,6 +214,12 @@ const CarOrdersTab = () => {
             </TableBody>
           </Table>
         </div>
+        
+        {filteredOrders.length === 0 && (
+          <div className="text-center text-gray-400 py-8">
+            {searchTerm ? 'No orders match your search.' : 'No car orders found.'}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

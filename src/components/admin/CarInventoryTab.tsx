@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { Pencil, Trash2, Plus } from 'lucide-react';
+import SearchAndFilter from './SearchAndFilter';
+import { exportToCSV } from '@/utils/exportUtils';
 
 interface Car {
   id: string;
@@ -27,6 +28,7 @@ const CarInventoryTab = () => {
   const [loading, setLoading] = useState(true);
   const [editingCar, setEditingCar] = useState<Car | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -43,6 +45,27 @@ const CarInventoryTab = () => {
 
   useEffect(() => {
     fetchCars();
+    
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('cars-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'cars'
+        },
+        () => {
+          console.log('Cars updated, refreshing...');
+          fetchCars();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchCars = async () => {
@@ -64,6 +87,37 @@ const CarInventoryTab = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const filteredCars = useMemo(() => {
+    if (!searchTerm) return cars;
+    
+    return cars.filter(car =>
+      car.make.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      car.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      car.fuel_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      car.transmission.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      car.year.toString().includes(searchTerm)
+    );
+  }, [cars, searchTerm]);
+
+  const handleExport = () => {
+    const exportData = filteredCars.map(car => ({
+      Make: car.make,
+      Model: car.model,
+      Year: car.year,
+      Price: `€${car.price}`,
+      Mileage: car.mileage || '',
+      'Fuel Type': car.fuel_type,
+      Transmission: car.transmission,
+      Description: car.description || ''
+    }));
+    
+    exportToCSV(exportData, 'car-inventory');
+    toast({
+      title: "Success",
+      description: "Car inventory exported successfully"
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -173,7 +227,7 @@ const CarInventoryTab = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-white">Car Inventory ({cars.length} cars)</h2>
+        <h2 className="text-2xl font-bold text-white">Car Inventory ({filteredCars.length} cars)</h2>
         <Button 
           onClick={() => setShowForm(true)}
           className="btn-primary"
@@ -182,6 +236,14 @@ const CarInventoryTab = () => {
           Add New Car
         </Button>
       </div>
+
+      <SearchAndFilter
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        onExport={handleExport}
+        onRefresh={fetchCars}
+        placeholder="Search by make, model, fuel type..."
+      />
 
       {showForm && (
         <Card className="bg-gray-900 border-gray-700">
@@ -332,7 +394,7 @@ const CarInventoryTab = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cars.map((car) => (
+                {filteredCars.map((car) => (
                   <TableRow key={car.id}>
                     <TableCell>
                       {car.image_url && (
@@ -373,6 +435,12 @@ const CarInventoryTab = () => {
               </TableBody>
             </Table>
           </div>
+          
+          {filteredCars.length === 0 && (
+            <div className="text-center text-gray-400 py-8">
+              {searchTerm ? 'No cars match your search.' : 'No cars found in inventory.'}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
