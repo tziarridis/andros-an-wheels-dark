@@ -82,7 +82,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <MapPin size={16} className="text-red-600" />
-                <span className="text-gray-400">Ayia Napa, Cyprus</span>
+                <span className="text-gray-400">Sotou Chatziprokopiou 20, Ayia Napa 5330, Cyprus</span>
               </div>
             </div>
           </div>
@@ -90,7 +90,7 @@ const Footer = () => {
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center">
           <p className="text-gray-400">
-            © 2024 Andros An. Cars. All rights reserved.
+            © 2025 Andros An. Cars. All rights reserved.
           </p>
         </div>
       </div>
