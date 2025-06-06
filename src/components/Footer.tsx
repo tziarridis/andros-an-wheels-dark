@@ -1,8 +1,11 @@
 
 import { Phone, MapPin, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from './LanguageSwitcher';
 
 const Footer = () => {
+  const { t } = useTranslation();
+
   return (
     <footer className="bg-gray-900 border-t border-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -15,8 +18,7 @@ const Footer = () => {
               className="h-12 w-auto mb-4"
             />
             <p className="text-gray-400 mb-6 max-w-md">
-              Your trusted car dealership in Ayia Napa, Cyprus. We offer direct finance, 
-              long-term leasing, and can import any car you desire.
+              {t('footer.description')}
             </p>
             <div className="flex space-x-4">
               <a
@@ -44,22 +46,22 @@ const Footer = () => {
             <ul className="space-y-2">
               <li>
                 <Link to="/" className="text-gray-400 hover:text-white transition-colors">
-                  Home
+                  {t('nav.home')}
                 </Link>
               </li>
               <li>
                 <Link to="/inventory" className="text-gray-400 hover:text-white transition-colors">
-                  Inventory
+                  {t('nav.inventory')}
                 </Link>
               </li>
               <li>
                 <Link to="/finance" className="text-gray-400 hover:text-white transition-colors">
-                  Finance
+                  {t('nav.finance')}
                 </Link>
               </li>
               <li>
                 <Link to="/order" className="text-gray-400 hover:text-white transition-colors">
-                  Order Car
+                  {t('nav.order')}
                 </Link>
               </li>
             </ul>

@@ -2,19 +2,21 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Phone } from 'lucide-react';
+import LanguageSwitcher, { useTranslation } from './LanguageSwitcher';
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { t } = useTranslation();
 
   const isActive = (path: string) => location.pathname === path;
 
   const navLinks = [
-    { path: '/', label: 'Home' },
-    { path: '/inventory', label: 'Inventory' },
-    { path: '/finance', label: 'Finance' },
-    { path: '/order', label: 'Order Car' },
-    { path: '/contact', label: 'Contact' },
+    { path: '/', label: t('nav.home') },
+    { path: '/inventory', label: t('nav.inventory') },
+    { path: '/finance', label: t('nav.finance') },
+    { path: '/order', label: t('nav.order') },
+    { path: '/contact', label: t('nav.contact') },
   ];
 
   return (
@@ -46,17 +48,19 @@ const Navigation = () => {
                 <span className={`absolute -bottom-1 left-0 w-0 h-0.5 bg-red-600 transition-all duration-300 group-hover:w-full ${isActive(link.path) ? 'w-full' : ''}`}></span>
               </Link>
             ))}
+            <LanguageSwitcher />
             <a
               href="tel:+35799676373"
               className="btn-primary flex items-center space-x-2 hover:scale-105 transition-transform duration-300"
             >
               <Phone size={18} />
-              <span>Call Now</span>
+              <span>{t('cta.call')}</span>
             </a>
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center space-x-4">
+            <LanguageSwitcher />
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="text-white hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-gray-800"
@@ -89,7 +93,7 @@ const Navigation = () => {
                 className="btn-primary flex items-center justify-center space-x-2 mt-4 hover:scale-105 transition-transform duration-300"
               >
                 <Phone size={18} />
-                <span>Call Now</span>
+                <span>{t('cta.call')}</span>
               </a>
             </div>
           </div>
