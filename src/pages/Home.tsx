@@ -1,5 +1,7 @@
+
 import { Phone, Star, CheckCircle, Car, DollarSign, Globe, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import SEOHead from '@/components/SEOHead';
 import LeadCaptureForm from '@/components/LeadCaptureForm';
 
 const Home = () => {

@@ -1,6 +1,7 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CarSpecification {
   engine_size?: string;
@@ -27,14 +28,59 @@ interface CarSpecification {
 }
 
 interface CarSpecificationsDisplayProps {
-  specifications: CarSpecification;
+  carId: string;
 }
 
-const CarSpecificationsDisplay = ({ specifications }: CarSpecificationsDisplayProps) => {
+const CarSpecificationsDisplay = ({ carId }: CarSpecificationsDisplayProps) => {
+  const [specifications, setSpecifications] = useState<CarSpecification | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchSpecifications();
+  }, [carId]);
+
+  const fetchSpecifications = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('car_specifications')
+        .select('*')
+        .eq('car_id', carId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching specifications:', error);
+        setSpecifications(null);
+      } else {
+        setSpecifications(data);
+      }
+    } catch (error) {
+      console.error('Error fetching specifications:', error);
+      setSpecifications(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formatValue = (value: any, unit?: string) => {
     if (value === null || value === undefined) return 'N/A';
     return unit ? `${value} ${unit}` : value;
   };
+
+  if (loading) {
+    return (
+      <div className="text-center py-8">
+        <div className="text-white">Loading specifications...</div>
+      </div>
+    );
+  }
+
+  if (!specifications) {
+    return (
+      <div className="text-center py-8">
+        <div className="text-gray-400">No detailed specifications available</div>
+      </div>
+    );
+  }
 
   const specSections = [
     {
@@ -81,24 +127,27 @@ const CarSpecificationsDisplay = ({ specifications }: CarSpecificationsDisplayPr
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {specSections.map((section) => (
-        <Card key={section.title} className="bg-gray-900 border-gray-700">
-          <CardHeader>
-            <CardTitle className="text-white text-lg">{section.title}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {section.specs.map((spec, index) => (
-                <div key={index} className="flex justify-between items-center border-b border-gray-700 pb-2">
-                  <span className="text-gray-300">{spec.label}</span>
-                  <span className="text-white font-medium">{spec.value}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+    <div>
+      <h2 className="text-3xl font-bold text-white mb-8">Full Specifications</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {specSections.map((section) => (
+          <Card key={section.title} className="bg-gray-900 border-gray-700">
+            <CardHeader>
+              <CardTitle className="text-white text-lg">{section.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {section.specs.map((spec, index) => (
+                  <div key={index} className="flex justify-between items-center border-b border-gray-700 pb-2">
+                    <span className="text-gray-300">{spec.label}</span>
+                    <span className="text-white font-medium">{spec.value}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };

@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CarImage {
   id: string;
@@ -10,17 +11,48 @@ interface CarImage {
 }
 
 interface CarGalleryProps {
-  images: CarImage[];
-  carTitle: string;
+  carId: string;
 }
 
-const CarGallery = ({ images, carTitle }: CarGalleryProps) => {
+const CarGallery = ({ carId }: CarGalleryProps) => {
+  const [images, setImages] = useState<CarImage[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCarImages();
+  }, [carId]);
+
+  const fetchCarImages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('car_images')
+        .select('*')
+        .eq('car_id', carId)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      setImages(data || []);
+    } catch (error) {
+      console.error('Error fetching car images:', error);
+      setImages([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="w-full h-96 bg-gray-800 rounded-lg flex items-center justify-center">
+        <span className="text-gray-400">Loading images...</span>
+      </div>
+    );
+  }
 
   if (!images || images.length === 0) {
     return (
-      <div className="w-full h-64 bg-gray-800 rounded-lg flex items-center justify-center">
+      <div className="w-full h-96 bg-gray-800 rounded-lg flex items-center justify-center">
         <span className="text-gray-400">No images available</span>
       </div>
     );
@@ -49,7 +81,7 @@ const CarGallery = ({ images, carTitle }: CarGalleryProps) => {
       <div className="relative group">
         <img
           src={images[currentIndex]?.image_url}
-          alt={images[currentIndex]?.alt_text || `${carTitle} - Image ${currentIndex + 1}`}
+          alt={images[currentIndex]?.alt_text || `Car Image ${currentIndex + 1}`}
           className="w-full h-96 object-cover rounded-lg cursor-pointer"
           onClick={() => openLightbox(currentIndex)}
         />
@@ -90,7 +122,7 @@ const CarGallery = ({ images, carTitle }: CarGalleryProps) => {
             <img
               key={image.id}
               src={image.image_url}
-              alt={image.alt_text || `${carTitle} thumbnail ${index + 1}`}
+              alt={image.alt_text || `Thumbnail ${index + 1}`}
               className={`w-20 h-16 object-cover rounded cursor-pointer border-2 transition-all ${
                 index === currentIndex
                   ? 'border-red-600 opacity-100'
@@ -108,7 +140,7 @@ const CarGallery = ({ images, carTitle }: CarGalleryProps) => {
           <div className="relative max-w-screen-lg max-h-screen-lg">
             <img
               src={images[currentIndex]?.image_url}
-              alt={images[currentIndex]?.alt_text || `${carTitle} - Image ${currentIndex + 1}`}
+              alt={images[currentIndex]?.alt_text || `Car Image ${currentIndex + 1}`}
               className="max-w-full max-h-full object-contain"
             />
             
