@@ -1,6 +1,6 @@
-
 import { Phone, Star, CheckCircle, Car, DollarSign, Globe, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import LeadCaptureForm from '@/components/LeadCaptureForm';
 
 const Home = () => {
   const featuredCars = [
@@ -69,6 +69,13 @@ const Home = () => {
 
   return (
     <div className="min-h-screen">
+      <SEOHead 
+        title="Andros An. Cars - Premier Car Dealership in Ayia Napa, Cyprus"
+        description="Find your perfect car at Andros An. Cars in Ayia Napa, Cyprus. Direct finance, import services, and quality vehicles. No bank hassle, competitive rates."
+        keywords="car dealership Cyprus, Ayia Napa cars, direct finance, car import, used cars Cyprus"
+        type="website"
+      />
+      
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black overflow-hidden">
         {/* Animated background elements */}
@@ -148,19 +155,23 @@ const Home = () => {
                 style={{animationDelay: `${index * 200}ms`}}
               >
                 <div className="relative overflow-hidden">
-                  <img 
-                    src={car.image} 
-                    alt={`${car.make} ${car.model}`}
-                    className="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
+                  <Link to={`/car/${car.id}`}>
+                    <img 
+                      src={car.image} 
+                      alt={`${car.make} ${car.model}`}
+                      className="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                  </Link>
                   <div className="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
                     {car.year}
                   </div>
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-bold text-white mb-4">
-                    {car.make} {car.model}
-                  </h3>
+                  <Link to={`/car/${car.id}`}>
+                    <h3 className="text-xl font-bold text-white mb-4 hover:text-red-600 transition-colors">
+                      {car.make} {car.model}
+                    </h3>
+                  </Link>
                   <div className="grid grid-cols-2 gap-3 text-sm text-gray-400 mb-6">
                     <div className="flex items-center space-x-2">
                       <div className="w-2 h-2 bg-red-600 rounded-full"></div>
@@ -177,10 +188,14 @@ const Home = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-2xl font-bold text-red-600">{car.price}</span>
-                    <Link to="/contact" className="btn-primary flex items-center space-x-2 hover:scale-105 transition-transform">
-                      <span>Inquire</span>
-                      <ArrowRight size={16} />
-                    </Link>
+                    <div className="flex space-x-2">
+                      <Link to={`/car/${car.id}`} className="btn-secondary text-sm px-4 py-2">
+                        Details
+                      </Link>
+                      <Link to="/contact" className="btn-primary text-sm px-4 py-2">
+                        Inquire
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -192,6 +207,44 @@ const Home = () => {
               <span>View All Inventory</span>
               <ArrowRight size={20} />
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Lead Capture Section */}
+      <section className="py-24 bg-gray-900">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+                Can't Find What You're Looking For?
+              </h2>
+              <p className="text-xl text-gray-400 mb-6">
+                We can import any vehicle you desire from anywhere in the world. 
+                Let us know what you're looking for and we'll find it for you.
+              </p>
+              <div className="space-y-4 text-gray-300">
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className="text-green-500" size={20} />
+                  <span>Direct import from Europe and beyond</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className="text-green-500" size={20} />
+                  <span>Competitive pricing and transparent fees</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className="text-green-500" size={20} />
+                  <span>Full import assistance and documentation</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <LeadCaptureForm 
+                source="homepage_import"
+                title="Request a Vehicle Import"
+                description="Tell us what you're looking for and we'll find it"
+              />
+            </div>
           </div>
         </div>
       </section>

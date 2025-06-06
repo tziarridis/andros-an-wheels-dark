@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import SEOHead from '@/components/SEOHead';
 
 interface Car {
   id: string;
@@ -92,7 +92,14 @@ const Inventory = () => {
 
   return (
     <div className="min-h-screen bg-black py-20">
+      <SEOHead 
+        title="Car Inventory - Browse Our Quality Vehicles"
+        description="Browse our extensive inventory of quality used cars in Cyprus. Find your perfect vehicle with detailed specifications, photos, and competitive pricing."
+        keywords="car inventory, used cars Cyprus, vehicles for sale, car dealership inventory"
+      />
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-white mb-4">Our Inventory</h1>
           <p className="text-xl text-gray-400">Browse our extensive collection of quality vehicles</p>
@@ -100,6 +107,7 @@ const Inventory = () => {
 
         {/* Search and Filters */}
         <div className="bg-gray-900 p-6 rounded-lg mb-8">
+          {/* Search */}
           <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             {/* Search */}
             <div className="md:col-span-2 relative">
@@ -174,16 +182,20 @@ const Inventory = () => {
         {/* Cars Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredCars.map((car) => (
-            <div key={car.id} className="bg-gray-900 rounded-lg overflow-hidden hover:shadow-2xl hover:shadow-red-600/20 transition-all duration-300">
-              <img 
-                src={car.image_url || 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=500&h=300&fit=crop'} 
-                alt={`${car.make} ${car.model}`}
-                className="w-full h-48 object-cover"
-              />
+            <div key={car.id} className="bg-gray-900 rounded-lg overflow-hidden hover:shadow-2xl hover:shadow-red-600/20 transition-all duration-300 group">
+              <Link to={`/car/${car.id}`}>
+                <img 
+                  src={car.image_url || 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=500&h=300&fit=crop'} 
+                  alt={`${car.make} ${car.model}`}
+                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              </Link>
               <div className="p-6">
-                <h3 className="text-xl font-bold text-white mb-2">
-                  {car.make} {car.model}
-                </h3>
+                <Link to={`/car/${car.id}`}>
+                  <h3 className="text-xl font-bold text-white mb-2 hover:text-red-600 transition-colors">
+                    {car.make} {car.model}
+                  </h3>
+                </Link>
                 <div className="grid grid-cols-2 gap-2 text-sm text-gray-400 mb-4">
                   <span>Year: {car.year}</span>
                   <span>Fuel: {car.fuel_type}</span>
@@ -191,13 +203,18 @@ const Inventory = () => {
                   <span>Mileage: {car.mileage}</span>
                 </div>
                 {car.description && (
-                  <p className="text-gray-300 text-sm mb-4">{car.description}</p>
+                  <p className="text-gray-300 text-sm mb-4 line-clamp-2">{car.description}</p>
                 )}
                 <div className="flex justify-between items-center">
                   <span className="text-2xl font-bold text-red-600">€{car.price.toLocaleString()}</span>
-                  <Link to="/contact" className="btn-primary">
-                    Inquire
-                  </Link>
+                  <div className="flex space-x-2">
+                    <Link to={`/car/${car.id}`} className="btn-secondary text-sm px-4 py-2">
+                      View Details
+                    </Link>
+                    <Link to="/contact" className="btn-primary text-sm px-4 py-2">
+                      Inquire
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>

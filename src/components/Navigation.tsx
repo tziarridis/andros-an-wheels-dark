@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Phone } from 'lucide-react';
@@ -16,6 +15,7 @@ const Navigation = () => {
     { path: '/inventory', label: t('nav.inventory') },
     { path: '/finance', label: t('nav.finance') },
     { path: '/order', label: t('nav.order') },
+    { path: '/about', label: 'About' },
     { path: '/contact', label: t('nav.contact') },
   ];
 
